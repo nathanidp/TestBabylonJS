@@ -1,0 +1,23 @@
+{
+  "name": "test_babylonjs_1",
+  "version": "1.0.0",
+  "description": "test for babylonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack && node app.js",
+    "watch": "webpack --watch"
+  },
+  "author": "nathan ramilijaona",
+  "license": "ISC",
+  "dependencies": {
+    "babylonjs": "^3.2.0-alpha7",
+    "express": "^4.16.2"
+  },
+  "devDependencies": {
+    "css-loader": "^0.28.9",
+    "html-webpack-plugin": "^2.30.1",
+    "style-loader": "^0.20.1",
+    "webpack": "^3.10.0"
+  }
+}
