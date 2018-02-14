@@ -1,10 +1,12 @@
 import * as BABYLON from 'babylonjs';
+import * as photonui from 'photonui';
 //import * as controller from './config_controller.js'
-import '../css/home.css';
+import '../css/home.less';
+
 
 import ConfigController from './config_controller';
 
-
+'use strict'
 window.addEventListener('DOMContentLoaded', function() {
     // All the following code is entered here
  var can = document.createElement('canvas');

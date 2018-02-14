@@ -12,11 +12,15 @@
   "license": "ISC",
   "dependencies": {
     "babylonjs": "^3.2.0-alpha7",
-    "express": "^4.16.2"
+    "express": "^4.16.2",
+    "photonui": "^1.7.2"
   },
   "devDependencies": {
     "css-loader": "^0.28.9",
+    "file-loader": "^1.1.6",
     "html-webpack-plugin": "^2.30.1",
+    "less": "^3.0.0",
+    "less-loader": "^4.0.5",
     "style-loader": "^0.20.1",
     "webpack": "^3.10.0"
   }
