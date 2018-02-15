@@ -41,7 +41,8 @@ window.addEventListener('DOMContentLoaded', function() {
     box.position = new BABYLON.Vector3(5,0,0);
     configControll = new ConfigController(scene, canvas);
     configControll.init();
-    return scene
+    
+    return scene;
     // return the created scene
  }
 

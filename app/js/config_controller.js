@@ -1,16 +1,19 @@
 import * as BABYLON from 'babylonjs';
 import * as photonui from 'photonui';
-
+import arrowImage from '../img/arrow.png';
+'use strict'
 
 export default class ConfigController {
     
     constructor(scene, canvas){
         this.scene = scene;
         this.canvas = canvas;
-        this.mode = 0; //Mode 0: drag, 1:create, 2:reshape, 3:rotate
-        this.draggingObject = {drag : false, object : null , oldPos : null, offset : 0, normal:null};
+        this.mode = 2; //Mode 0: drag, 1:create, 2:reshape, 3:rotate
+        this.interactObject = {drag : false, object : null , oldPos : null, offset : 0, normal:null , sprite : null, spriteOldPos : null};
         this.draggingPlaneMath = null ;
         this.draggingPlaneGeo = null;
+        this.spriteManagerArrow = new BABYLON.SpriteManager("arrowManager", arrowImage,4,420,this.scene);
+        this.spriteManagerArrow.isPickable = true;
     }
     //Initialize the event of the scene
     changeMode(){
@@ -18,10 +21,12 @@ export default class ConfigController {
             if(evt.sourceEvent.key=="k"){
                 this.mode = (this.mode+1)%4;
                 this.showMode();
+                this.destructArrows();
             }
         }
     }
     init() {
+        
         this.scene.actionManager = new BABYLON.ActionManager(this.scene);
         this.scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, this.changeMode()));
         this.scene.onPointerMove = (evt, pickResult) =>{
@@ -29,27 +34,55 @@ export default class ConfigController {
                 var pickinfo = scene.pick(scene.pointerX, scene.pointerY);
                 if(pickinfo.hit)
                     this.canvas.style.cursor = "move";
-                if(this.draggingObject.drag){
+                if(this.interactObject.drag){
                     let ray = this.scene.createPickingRay(this.scene.pointerX, this.scene.pointerY);
                     let intersect = this.intersectionRayPlane(ray,this.draggingPlaneGeo);
-                    let diff = intersect.subtract(this.draggingObject.oldPos);
-                    this.draggingObject.object.position.addInPlace(diff);
-                    this.draggingObject.oldPos = intersect;
+                    let diff = intersect.subtract(this.interactObject.oldPos);
+                    this.interactObject.object.position.addInPlace(diff);
+                    this.interactObject.oldPos = intersect;
                 }
             }
             else if(this.mode==2){
-                
+                if(this.interactObject.drag){
+                    var pickSpriteInfo = scene.pickSprite(evt.clientX,evt.clientY);
+                    console.log(pickSpriteInfo);
+                    let ray = this.scene.createPickingRay(evt.clientX,evt.clientY);
+                    let intersect = this.intersectionRayPlane(ray,this.draggingPlaneGeo);
+                    let diff = intersect.subtract(this.interactObject.spriteOldPos);
+                    diff.z = 0;
+                    if(this.interactObject.sprite.name=="arrowLeft" || this.interactObject.sprite.name=="arrowRight"){
+                        diff.y = 0;
+                    }
+                    else
+                        diff.x = 0;
+                    if(this.interactObject.sprite.name=="arrowLeft" || this.interactObject.sprite.name=="arrowDown"){
+                        this.interactObject.object.scaling.addInPlace(diff.negate());
+                    }
+                    else
+                        this.interactObject.object.scaling.addInPlace(diff);                    
+                    if(this.interactObject.object.scaling.x < 0) {
+                        this.interactObject.object.scaling.x = 0;
+                        diff = BABYLON.Vector3.Zero();
+                    };
+                    if(this.interactObject.object.scaling.y < 0) {
+                        this.interactObject.object.scaling.y = 0 ;
+                        diff = BABYLON.Vector3.Zero();
+                    }
+                    this.interactObject.sprite.position.addInPlace(diff);
+                    this.interactObject.spriteOldPos = intersect;
+                    this.placeArrow();
+                }
             }
         }
         this.scene.onPointerDown = (evt, pickResult)  => {
             if(this.mode==0){
                 if(pickResult.hit){
                     this.scene.activeCamera.detachControl(this.canvas);
-                    this.draggingObject.drag = true;
-                    this.draggingObject.object = pickResult.pickedMesh;
-                    this.draggingObject.oldPos = pickResult.pickedPoint;
+                    this.interactObject.drag = true;
+                    this.interactObject.object = pickResult.pickedMesh;
+                    this.interactObject.oldPos = pickResult.pickedPoint;
                     const normal = this.scene.activeCamera.getForwardRay().direction;
-                    this.draggingObject.normal = normal;
+                    this.interactObject.normal = normal;
                     this.draggingPlaneMath = new BABYLON.Plane(normal.x,normal.y,normal.z, BABYLON.Vector3.Dot(normal, pickResult.pickedPoint));
                     this.draggingPlaneMath.normalize();
                     this.draggingPlaneGeo = BABYLON.MeshBuilder.CreatePlane('plane1', {width:7, height:7,
@@ -58,19 +91,32 @@ export default class ConfigController {
                 }
             }
             else if(this.mode==2){
-                if(pickResult.hit){
-                    this.draggingObject.object = pickResult.pickedMesh;
-                    
+                var pickSpriteResult = this.scene.pickSprite(evt.clientX, evt.clientY, function (sprite) {return sprite.isPickable; });
+                if(pickResult.hit && this.spriteManagerArrow.sprites.length==0){
+                    this.interactObject.object = pickResult.pickedMesh;
+                    this.addRescaleArrow();
                 }
+                else if(pickSpriteResult.hit){
+                     this.interactObject.drag = true;
+                     this.interactObject.spriteOldPos = pickSpriteResult.pickedSprite.position;
+                     //this.interactObject.object = pickSpriteResult.pickedSprite;
+                     this.interactObject.sprite = pickSpriteResult.pickedSprite;
+                     const normal = this.scene.activeCamera.getForwardRay().direction;
+                     this.interactObject.normal = normal;
+                     this.draggingPlaneMath = new BABYLON.Plane(normal.x,normal.y,normal.z, BABYLON.Vector3.Dot(normal, pickSpriteResult.pickedSprite.position));
+                     this.draggingPlaneMath.normalize();
+                     this.draggingPlaneGeo = BABYLON.MeshBuilder.CreatePlane('plane1', {width:7, height:7,
+                         sourcePlane:this.draggingPlaneMath, sourceOrientation:BABYLON.Mesh.DOUBLESIDE},this.scene);
+                     this.draggingPlaneGeo.visibility = 0;
+                }
+                else
+                    this.destructArrows();
             }
         }
         this.scene.onPointerUp = (evt, pickResult) => {
-            if(this.mode==0){
-                this.reinitDragging();
-            }
-            else if(this.mode==2){
-
-            }
+            this.reinitDragging();
+            if(this.mode==0)
+                this.interactObject.object = null;
         }
     }
     //Get the intersection of a ray and a plane
@@ -95,13 +141,13 @@ export default class ConfigController {
     }
 
     reinitDragging(){
-        if(this.draggingObject.drag){
-            this.draggingObject.drag = false;
-            this.draggingObject.oldPos = null;
-            this.draggingPlaneGeo.dispose();
+        if(this.interactObject.drag){
+            this.interactObject.drag = false;
+            this.interactObject.oldPos = null;
+            if(this.draggingPlaneGeo)
+                this.draggingPlaneGeo.dispose();
             this.draggingPlaneMath = null;
         }
-        this.draggingObject.object = null;
     }
     showMode(){
         var myPopup = photonui.PopupWindow.$extend({
@@ -136,5 +182,59 @@ export default class ConfigController {
         win.setHeight(win.getChild().offsetHeight);
         win.show();
         win.center();
+    }
+    addRescaleArrow(){
+        const spriteManagerArrow = this.spriteManagerArrow;
+        var arrowDown = new BABYLON.Sprite("arrowDown", spriteManagerArrow);
+        arrowDown.isPickable = true;
+        arrowDown.size = 1;
+        var arrowLeft = new BABYLON.Sprite("arrowLeft", spriteManagerArrow);
+        arrowLeft.isPickable = true;
+        arrowLeft.size = 1;
+        var arrowRight = new BABYLON.Sprite("arrowRight", spriteManagerArrow);
+        arrowRight.angle = Math.PI/2;
+        arrowRight.isPickable = true;
+        arrowRight.size = 1;
+        var arrowUp = new BABYLON.Sprite("arrowUp", spriteManagerArrow);
+        arrowUp.isPickable = true;
+        arrowUp.size = 1;
+        this.placeArrow();
+    }
+    
+    placeArrow(){
+        const bb = this.interactObject.object.getBoundingInfo().boundingBox;
+        this.spriteManagerArrow.sprites.forEach(function(arrow){
+            switch(arrow.name){
+                case "arrowDown" :
+                    arrow.position.x = bb.centerWorld.x;
+                    arrow.position.y = bb.minimumWorld.y - 1;
+                    arrow.position.z = bb.minimumWorld.z;
+                    break;
+                case "arrowLeft" :
+                    arrow.angle = 3 * Math.PI/2;
+                    arrow.position.x = bb.minimumWorld.x - 1;
+                    arrow.position.y = bb.centerWorld.y;
+                    arrow.position.z = bb.minimumWorld.z;
+                    break;
+                case "arrowRight" :
+                    arrow.angle = Math.PI/2;
+                    arrow.position.x = bb.maximumWorld.x + 1;
+                    arrow.position.y = bb.centerWorld.y;
+                    arrow.position.z = bb.minimumWorld.z;
+                    break;
+                case "arrowUp" :
+                    arrow.angle = Math.PI;
+                    arrow.position.x = bb.centerWorld.x;
+                    arrow.position.y = bb.maximumWorld.y + 1;
+                    arrow.position.z = bb.minimumWorld.z;
+                    break;
+            }
+        })
+    }
+    destructArrows(){
+        while(this.spriteManagerArrow.sprites.length > 0){
+            var arrow = this.spriteManagerArrow.sprites.pop();
+            arrow.dispose();
+        }
     }
 }
