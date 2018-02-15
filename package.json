@@ -11,7 +11,16 @@
   "author": "nathan ramilijaona",
   "license": "ISC",
   "dependencies": {
+    "abitbol": "^1.2.0",
+    "babel": "^6.23.0",
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
     "babylonjs": "^3.2.0-alpha7",
+    "eslint": "^4.17.0",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-loader": "^1.9.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-jsdoc": "^3.4.1",
     "express": "^4.16.2",
     "photonui": "^1.7.2"
   },
