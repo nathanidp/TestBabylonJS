@@ -32,28 +32,23 @@ const RotateController = Controller.$extend({
                 case 0:
                     aTanOStart = Math.atan2(oToStart.z, oToStart.y);
                     aTanOEnd = Math.atan2(oToEnd.z, oToEnd.y);
-                    diff = aTanOEnd - aTanOStart;
-                    this.interactObject.object.addRotation(diff, 0.0, 0.0);
-                    this.guizmos.forEach(function (guizmo) {
-                        if (guizmo && guizmo.name != "guizmoX") {
-                            guizmo.addRotation(-diff, 0.0, 0.0);
-                        }
-                    });
+                    diff = aTanOStart - aTanOEnd;
+                    this.interactObject.object.rotate(BABYLON.Axis.X, diff, BABYLON.Space.WORLD);
                     this.interactObject.oldPos = intersect;
                     break;
                 case 1:
                     aTanOStart = Math.atan2(oToStart.z, oToStart.x);
                     aTanOEnd = Math.atan2(oToEnd.z, oToEnd.x);
                     diff = aTanOEnd - aTanOStart;
-                    this.interactObject.object.addRotation(0.0, diff, 0.0);
-                    this.guizmos.forEach(function (guizmo) {
-                        if (guizmo && guizmo.name != "guizmoY") {
-                            guizmo.addRotation(0.0, 0.0, -diff);
-                        }
-                    });
+                    this.interactObject.object.rotate(BABYLON.Axis.Y, diff, BABYLON.Space.WORLD);
                     this.interactObject.oldPos = intersect;
                     break;
                 case 2:
+                    aTanOStart = Math.atan2(oToStart.y, oToStart.x);
+                    aTanOEnd = Math.atan2(oToEnd.y, oToEnd.x);
+                    diff = aTanOEnd - aTanOStart;
+                    this.interactObject.object.rotate(BABYLON.Axis.Z, diff, BABYLON.Space.WORLD);
+                    this.interactObject.oldPos = intersect;
                     break;
                 default:
                     break;
@@ -68,18 +63,21 @@ const RotateController = Controller.$extend({
             if (this.interactObject.object == null) {
                 const blueMat = new BABYLON.StandardMaterial("blueMat", this.scene);
                 const redMat = new BABYLON.StandardMaterial("redMat", this.scene);
+                const greenMat = new BABYLON.StandardMaterial("greenMat", this.scene);
                 blueMat.diffuseColor = new BABYLON.Color3(0, 0, 1);
                 redMat.diffuseColor = new BABYLON.Color3(1, 0, 0);
-                const guizmoZ = null;
+                greenMat.diffuseColor = new BABYLON.Color3(0, 1, 0);
+                const guizmoZDiameter = pickResult.pickedMesh.getBoundingInfo().boundingSphere.radiusWorld + 2;
                 const guizmoXDiameter = pickResult.pickedMesh.getBoundingInfo().boundingBox.maximumWorld.y - pickResult.pickedMesh.getBoundingInfo().boundingBox.minimumWorld.y + 2; // checking max and min y for the guizmo x diameter
                 const guizmoYDiameter = pickResult.pickedMesh.getBoundingInfo().boundingSphere.radiusWorld + 2; // checking max and min x for the guizmo y diameter
+                const guizmoZ = BABYLON.MeshBuilder.CreateTorus("guizmoZ", { diameter: guizmoZDiameter, thickness: 0.2 }, this.scene);
                 const guizmoY = BABYLON.MeshBuilder.CreateTorus("guizmoY", { diameter: guizmoYDiameter, thickness: 0.2 }, this.scene);
                 const guizmoX = BABYLON.MeshBuilder.CreateTorus("guizmoX", { diameter: guizmoXDiameter, thickness: 0.2 }, this.scene);
-                guizmoY.position = guizmoX.position = pickResult.pickedMesh.position;
+                guizmoY.position = guizmoX.position = guizmoZ.position = pickResult.pickedMesh.position;
                 guizmoY.material = redMat;
-                guizmoY.rotation = new BABYLON.Vector3(pickResult.pickedMesh.rotation.x, pickResult.pickedMesh.rotation.y, pickResult.pickedMesh.rotation.z);
-                guizmoX.rotation = new BABYLON.Vector3(pickResult.pickedMesh.rotation.x, pickResult.pickedMesh.rotation.y, pickResult.pickedMesh.rotation.z);
                 guizmoX.material = blueMat;
+                guizmoZ.material = greenMat;
+                guizmoZ.addRotation(Math.PI / 2, 0.0, 0.0);
                 guizmoX.addRotation(Math.PI / 2, Math.PI / 2, 0.0);
                 this.guizmos.push(guizmoX);
                 this.guizmos.push(guizmoY);
@@ -99,8 +97,7 @@ const RotateController = Controller.$extend({
                     sourcePlane: this.draggingPlaneMath,
                 }, this.scene);
                 this.draggingPlaneGeo.visibility = 0;
-            } else {
-                this.destructEvent(); }
+            } else { this.destructEvent(); }
         } else {
             this.destructEvent();
         }
