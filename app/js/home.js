@@ -6,7 +6,7 @@ import * as photonui from "photonui";
 import "../css/home.less";
 
 
-import ConfigController from "./config_controller";
+import AppManager from "./appManager";
 
 
 window.addEventListener("DOMContentLoaded", function () {
@@ -15,7 +15,7 @@ window.addEventListener("DOMContentLoaded", function () {
     document.body.appendChild(can);
     const canvas = document.getElementById("renderCanvas");
     const engine = new BABYLON.Engine(canvas, true);
-    let configControll;
+    let appManager;
 
     const createScene = function () {
     // create a basic BJS Scene object
@@ -43,8 +43,9 @@ window.addEventListener("DOMContentLoaded", function () {
         window.canvas = canvas;
         const box = BABYLON.MeshBuilder.CreateBox("box1", { width: 1, height: 1, depth: 1 }, scene);
         box.position = new BABYLON.Vector3(5, 0, 0);
-        configControll = new ConfigController(scene, canvas);
-        configControll.init();
+        window.box = box;
+        appManager = new AppManager(scene, canvas);
+        appManager.init();
         return scene;
     // return the created scene
     };

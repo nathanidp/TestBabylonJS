@@ -1,6 +1,5 @@
 "use strict";
 
-// import * as BABYLON from "babylonjs";
 import * as photonui from "photonui";
 import * as Class from "abitbol";
 
@@ -12,8 +11,8 @@ const UIController = Class.$extend({
         this.modeIndicator = null;
     },
     init() {
+        document.addEventListener("keydown", this.changeMode(), false);
         this.initModeIndicator();
-
     },
     initModeIndicator() {
         this.modeIndicator = new photonui.Window({
@@ -22,14 +21,38 @@ const UIController = Class.$extend({
             width: 150,
             child: new photonui.Label({}),
         });
-        this.modeIndicator.getChild().setText(this.getModeName());
+        this.modeIndicator.getChild().setText(this.manager.getModeName());
         this.modeIndicator.setHeight(this.modeIndicator.getChild().offsetHeight);
         this.modeIndicator.setX(0);
         this.modeIndicator.setY(0);
         this.modeIndicator.show();
     },
     showMode() {
-
+        const myPopup = photonui.PopupWindow.$extend({
+            show() {
+                this.visible = true;
+                setTimeout(this.destroy, 500);
+            },
+        });
+        const win = new myPopup({
+            padding: 10,
+            height: 100,
+            width: 100,
+            child: new photonui.Label({}),
+        });
+        win.getChild().setText("Mode : " + this.manager.getModeName());
+        win.setHeight(win.getChild().offsetHeight);
+        win.show();
+        win.center();
+        this.modeIndicator.getChild().setText(this.manager.getModeName());
+    },
+    changeMode() {
+        return (evt) => {
+            if (evt.key == "k") {
+                this.manager.updateMode();
+                this.showMode();
+            }
+        };
     },
 
 });
