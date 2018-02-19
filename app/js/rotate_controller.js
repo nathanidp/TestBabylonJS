@@ -16,7 +16,6 @@ const RotateController = Controller.$extend({
 
     pointerMoveAction(evt, pickResult) {
         if (this.interactObject.rotate) {
-            console.log("MOOVE");
             const ray = this.scene.createPickingRay(evt.clientX, evt.clientY);
             const intersect = this.intersectionRayPlane(ray, this.draggingPlaneGeo);
             // The vector between center of object and start of dragging
@@ -34,11 +33,10 @@ const RotateController = Controller.$extend({
                     aTanOStart = Math.atan2(oToStart.z, oToStart.y);
                     aTanOEnd = Math.atan2(oToEnd.z, oToEnd.y);
                     diff = aTanOEnd - aTanOStart;
-                    console.log(diff);
                     this.interactObject.object.addRotation(diff, 0.0, 0.0);
                     this.guizmos.forEach(function (guizmo) {
                         if (guizmo && guizmo.name != "guizmoX") {
-                            guizmo.addRotation(diff, 0.0, 0.0);
+                            guizmo.addRotation(-diff, 0.0, 0.0);
                         }
                     });
                     this.interactObject.oldPos = intersect;
@@ -50,7 +48,7 @@ const RotateController = Controller.$extend({
                     this.interactObject.object.addRotation(0.0, diff, 0.0);
                     this.guizmos.forEach(function (guizmo) {
                         if (guizmo && guizmo.name != "guizmoY") {
-                            guizmo.addRotation(0.0, 0.0, diff);
+                            guizmo.addRotation(0.0, 0.0, -diff);
                         }
                     });
                     this.interactObject.oldPos = intersect;
@@ -73,10 +71,10 @@ const RotateController = Controller.$extend({
                 blueMat.diffuseColor = new BABYLON.Color3(0, 0, 1);
                 redMat.diffuseColor = new BABYLON.Color3(1, 0, 0);
                 const guizmoZ = null;
-                const guizmoXDiameter = pickResult.pickedMesh.getBoundingInfo().maximum.y - pickResult.pickedMesh.getBoundingInfo().minimum.y + 2; // checking max and min y for the guizmo x diameter
-                const guizmoYDiameter = pickResult.pickedMesh.getBoundingInfo().maximum.y - pickResult.pickedMesh.getBoundingInfo().minimum.y + 2; // checking max and min x for the guizmo y diameter
-                const guizmoY = BABYLON.MeshBuilder.CreateTorus("guizmoY", { diameter: guizmoYDiameter, thickness: 0.1 }, this.scene);
-                const guizmoX = BABYLON.MeshBuilder.CreateTorus("guizmoX", { diameter: guizmoXDiameter, thickness: 0.1 }, this.scene);
+                const guizmoXDiameter = pickResult.pickedMesh.getBoundingInfo().boundingBox.maximumWorld.y - pickResult.pickedMesh.getBoundingInfo().boundingBox.minimumWorld.y + 2; // checking max and min y for the guizmo x diameter
+                const guizmoYDiameter = pickResult.pickedMesh.getBoundingInfo().boundingSphere.radiusWorld + 2; // checking max and min x for the guizmo y diameter
+                const guizmoY = BABYLON.MeshBuilder.CreateTorus("guizmoY", { diameter: guizmoYDiameter, thickness: 0.2 }, this.scene);
+                const guizmoX = BABYLON.MeshBuilder.CreateTorus("guizmoX", { diameter: guizmoXDiameter, thickness: 0.2 }, this.scene);
                 guizmoY.position = guizmoX.position = pickResult.pickedMesh.position;
                 guizmoY.material = redMat;
                 guizmoY.rotation = new BABYLON.Vector3(pickResult.pickedMesh.rotation.x, pickResult.pickedMesh.rotation.y, pickResult.pickedMesh.rotation.z);
@@ -101,7 +99,8 @@ const RotateController = Controller.$extend({
                     sourcePlane: this.draggingPlaneMath,
                 }, this.scene);
                 this.draggingPlaneGeo.visibility = 0;
-            }
+            } else {
+                this.destructEvent(); }
         } else {
             this.destructEvent();
         }
@@ -110,6 +109,7 @@ const RotateController = Controller.$extend({
     pointerUpAction() {
         if (this.interactObject.rotate) {
             this.interactObject.rotate = false;
+            if (this.draggingPlaneGeo) { this.draggingPlaneGeo.dispose(); }
         }
     },
     checkGuizmoAxis(name) {
@@ -136,7 +136,7 @@ const RotateController = Controller.$extend({
             if (toDestroy != null) { toDestroy.dispose(); }
         }
         this.interactObject = {
-            rotate: false, object: null, oldPos: null, normal: null, axisRotate: 0, // 0 axis X, 1 axis Y, 2 axis Z
+            rotate: false, object: null, oldPos: null, normal: null, axisRotate: -1, // 0 axis X, 1 axis Y, 2 axis Z
         };
         this.draggingPlaneMath = null;
         if (this.draggingPlaneGeo) { this.draggingPlaneGeo.dispose(); }
