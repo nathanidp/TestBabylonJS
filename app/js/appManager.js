@@ -12,7 +12,7 @@ const AppManager = Class.$extend({
     __init__(scene, canvas) {
         this.scene = scene;
         this.canvas = canvas;
-        this.mode = 3; // Mode 0: drag, 1:create, 2:rescale, 3:rotate
+        this.mode = 2; // Mode 0: drag, 1:create, 2:rescale, 3:rotate
         this.uicontroller = new UIController(this.scene, this.canvas, this);
         this.controllers = []; // Array of controllers
         window.AppManager = this; // For debugging

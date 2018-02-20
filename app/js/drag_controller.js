@@ -29,10 +29,11 @@ const DragController = Controller.$extend({
         if (pickResult.hit) {
             this.interactObject.drag = true;
             this.interactObject.object = pickResult.pickedMesh;
-            this.interactObject.oldPos = pickResult.pickedPoint;
+            const planPos = pickResult.pickedPoint;
+            planPos.z = pickResult.pickedMesh.getBoundingInfo().boundingBox.minimumWorld.z;
             const normal = this.scene.activeCamera.getForwardRay().direction;
             this.interactObject.normal = normal;
-            this.draggingPlaneMath = new BABYLON.Plane(normal.x, normal.y, normal.z, BABYLON.Vector3.Dot(normal, pickResult.pickedPoint));
+            this.draggingPlaneMath = new BABYLON.Plane(normal.x, normal.y, normal.z, BABYLON.Vector3.Dot(normal, planPos));
             this.draggingPlaneMath.normalize();
             this.draggingPlaneGeo = BABYLON.MeshBuilder.CreatePlane("plane1", {
                 width: 7,
@@ -40,6 +41,9 @@ const DragController = Controller.$extend({
                 sourcePlane: this.draggingPlaneMath,
                 sourceOrientation: BABYLON.Mesh.DOUBLESIDE,
             }, this.scene);
+            const newRay = this.scene.createPickingRay(this.scene.pointerX, this.scene.pointerY);
+            const intersect = this.intersectionRayPlane(newRay, this.draggingPlaneGeo);
+            this.interactObject.oldPos = intersect;
             this.draggingPlaneGeo.visibility = 0;
         }
     },
