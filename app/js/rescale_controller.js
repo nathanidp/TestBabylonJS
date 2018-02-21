@@ -23,23 +23,31 @@ const RescaleController = Controller.$extend({
             const ray = this.scene.createPickingRay(evt.clientX, evt.clientY);
             const intersect = this.intersectionRayPlane(ray, this.draggingPlaneGeo);
             let diff = intersect.subtract(this.interactObject.spriteOldPos);
-            diff.z = 0;
+            diff.scaleInPlace(2);
+            let currentAxis;
             if (this.interactObject.sprite.name == "planeArrowLeft" || this.interactObject.sprite.name == "planeArrowRight") {
-                diff.y = 0;
-            } else { diff.x = 0; }
+                currentAxis = new BABYLON.Vector3(1, 0, 0);
+            } else {
+                currentAxis = new BABYLON.Vector3(0, 1, 0);
+            }
             if (this.interactObject.sprite.name == "planeArrowLeft" || this.interactObject.sprite.name == "planeArrowDown") {
-                this.interactObject.object.scaling.addInPlace(diff.negate());
-            } else { this.interactObject.object.scaling.addInPlace(diff); }
+                currentAxis = currentAxis.negate();
+                diff = diff.negate();
+            }
+            const m = BABYLON.Matrix.Identity();
+            if (this.interactObject.object.rotationQuaternion) {
+                this.interactObject.object.rotationQuaternion.toRotationMatrix(m);
+            }
+            const rotatedAxis = BABYLON.Vector3.TransformCoordinates(currentAxis, m);
+            const signedDistance = diff.length() * Math.sign(BABYLON.Vector3.Dot(rotatedAxis, diff));
+            const diff3 = currentAxis.clone().normalize().scale(signedDistance);
+            this.interactObject.object.scaling = this.interactObject.oldScale.add(diff3);
             if (this.interactObject.object.scaling.x < 0) {
                 this.interactObject.object.scaling.x = 0;
-                diff = BABYLON.Vector3.Zero();
             }
             if (this.interactObject.object.scaling.y < 0) {
                 this.interactObject.object.scaling.y = 0;
-                diff = BABYLON.Vector3.Zero();
             }
-            this.interactObject.sprite.position.addInPlace(diff);
-            this.interactObject.spriteOldPos = intersect;
             this.placeArrowPlane();
         }
     },
@@ -47,14 +55,17 @@ const RescaleController = Controller.$extend({
     pointerDownAction(evt, pickResult) {
         if (pickResult.hit && this.arrowPlanes.length == 0 && this.checkArrow(pickResult.pickedMesh.name) == -1) {
             this.interactObject.object = pickResult.pickedMesh;
+            this.interactObject.oldScale = this.interactObject.object.scaling;
             this.addRescaleArrow();
         } else if (pickResult.hit && this.checkArrow(pickResult.pickedMesh.name) != -1) {
             this.interactObject.drag = true;
             const planPos = pickResult.pickedPoint;
             planPos.z = pickResult.pickedMesh.getBoundingInfo().boundingBox.minimumWorld.z;
             this.interactObject.sprite = pickResult.pickedMesh;
+            this.interactObject.oldScale = this.interactObject.object.scaling;
             const normal = this.scene.activeCamera.getForwardRay().direction;
             this.interactObject.normal = normal;
+
             this.draggingPlaneMath = new BABYLON.Plane(normal.x, normal.y, normal.z, BABYLON.Vector3.Dot(normal, planPos));
             this.draggingPlaneMath.normalize();
             this.draggingPlaneGeo = BABYLON.MeshBuilder.CreatePlane("plane1", {
@@ -109,7 +120,6 @@ const RescaleController = Controller.$extend({
         arrowUpPlane.material = matUp;
         this.arrowPlanes.push(arrowUpPlane);
         this.placeArrowPlane();
-        window.plane = arrowDownPlane;
     },
 
     placeArrowPlane() {
@@ -118,34 +128,47 @@ const RescaleController = Controller.$extend({
             switch (arrow.name) {
                 case "planeArrowDown":
                     arrow.position.x = bb.center.x;
-                    arrow.position.y = bb.minimum.y - 1;
+                    arrow.position.y = bb.minimum.y;
                     arrow.position.z = bb.minimum.z;
+                    if (this.interactObject.object.rotationQuaternion) {
+                        arrow.rotationQuaternion = this.interactObject.object.rotationQuaternion;
+                    }
+                    arrow.position = BABYLON.Vector3.TransformCoordinates(arrow.position, bb.getWorldMatrix());
+                    arrow.translate(BABYLON.Axis.Y, -1, BABYLON.Space.LOCAL);
                     break;
                 case "planeArrowLeft":
-                    arrow.position.x = bb.minimum.x - 1;
+                    arrow.position.x = bb.minimum.x;
                     arrow.position.y = bb.center.y;
                     arrow.position.z = bb.minimum.z;
+                    if (this.interactObject.object.rotationQuaternion) {
+                        arrow.rotationQuaternion = this.interactObject.object.rotationQuaternion;
+                    }
+                    arrow.position = BABYLON.Vector3.TransformCoordinates(arrow.position, bb.getWorldMatrix());
+                    arrow.translate(BABYLON.Axis.X, -1, BABYLON.Space.LOCAL);
                     break;
                 case "planeArrowRight":
-                    arrow.position.x = bb.maximum.x + 1;
+                    arrow.position.x = bb.maximum.x;
                     arrow.position.y = bb.center.y;
                     arrow.position.z = bb.minimum.z;
+                    if (this.interactObject.object.rotationQuaternion) {
+                        arrow.rotationQuaternion = this.interactObject.object.rotationQuaternion;
+                    }
+                    arrow.position = BABYLON.Vector3.TransformCoordinates(arrow.position, bb.getWorldMatrix());
+                    arrow.translate(BABYLON.Axis.X, 1, BABYLON.Space.LOCAL);
                     break;
                 case "planeArrowUp":
                     arrow.position.x = bb.center.x;
-                    arrow.position.y = bb.maximum.y + 1;
+                    arrow.position.y = bb.maximum.y;
                     arrow.position.z = bb.minimum.z;
+                    if (this.interactObject.object.rotationQuaternion) {
+                        arrow.rotationQuaternion = this.interactObject.object.rotationQuaternion;
+                    }
+                    arrow.position = BABYLON.Vector3.TransformCoordinates(arrow.position, bb.getWorldMatrix());
+                    arrow.translate(BABYLON.Axis.Y, 1, BABYLON.Space.LOCAL);
                     break;
                 default:
-                    console.log("Exception wirth ArrowPlanes");
-                    return -1;
+                    console.log("Exception with ArrowPlanes");
             }
-            arrow.width = 2;
-            arrow.height = 2;
-            if (this.interactObject.object.rotationQuaternion) {
-                arrow.rotationQuaternion = this.interactObject.object.rotationQuaternion;
-            }
-            arrow.position = BABYLON.Vector3.TransformCoordinates(arrow.position, this.interactObject.object.getWorldMatrix());
         });
     },
     checkArrow(arrowName) {

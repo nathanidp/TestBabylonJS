@@ -47,6 +47,18 @@ const Controller = Class.$extend({
         const intersect = rayDir.scale(d).add(rayStart);
         return intersect;
     },
+    RotationBetweenVectors(start, dest) {
+        const a = BABYLON.Vector3.Cross(start, dest);
+        const w = Math.sqrt((start.length() ** 2) * (dest.length() ** 2)) + BABYLON.Vector3.Dot(start, dest);
+        const quatRet = new BABYLON.Quaternion(a.x, a.y, a.z, w);
+        quatRet.normalize();
+        return quatRet;
+    },
+    _distanceToProjected(point, linePoint, lineVector) {
+        const ba = point.subtract(linePoint);
+        const bh = BABYLON.Vector2.Dot(ba, lineVector) / lineVector.length();
+        return Math.abs(bh);
+    },
 });
 
 export default Controller;

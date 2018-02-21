@@ -86,16 +86,20 @@ const RotateController = Controller.$extend({
             } else if (checkGuizmo != -1) {
                 this.interactObject.rotate = true;
                 this.interactObject.axisRotate = checkGuizmo;
-                this.interactObject.oldPos = pickResult.pickedPoint;
+                const planPos = pickResult.pickedPoint;
+                planPos.z = pickResult.pickedMesh.getBoundingInfo().boundingBox.minimumWorld.z;
                 const normal = this.scene.activeCamera.getForwardRay().direction;
                 this.interactObject.normal = normal;
-                this.draggingPlaneMath = new BABYLON.Plane(normal.x, normal.y, normal.z, BABYLON.Vector3.Dot(normal, pickResult.pickedPoint));
+                this.draggingPlaneMath = new BABYLON.Plane(normal.x, normal.y, normal.z, BABYLON.Vector3.Dot(normal, planPos));
                 this.draggingPlaneMath.normalize();
                 this.draggingPlaneGeo = BABYLON.MeshBuilder.CreatePlane("plane", {
                     width: 7,
                     height: 7,
                     sourcePlane: this.draggingPlaneMath,
                 }, this.scene);
+                const newRay = this.scene.createPickingRay(this.scene.pointerX, this.scene.pointerY);
+                const intersect = this.intersectionRayPlane(newRay, this.draggingPlaneGeo);
+                this.interactObject.oldPos = intersect;
                 this.draggingPlaneGeo.visibility = 0;
             } else { this.destructEvent(); }
         } else {
