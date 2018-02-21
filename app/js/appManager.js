@@ -12,7 +12,8 @@ const AppManager = Class.$extend({
     __init__(scene, canvas) {
         this.scene = scene;
         this.canvas = canvas;
-        this.mode = 2; // Mode 0: drag, 1:create, 2:rescale, 3:rotate
+        this.activatedCamera = true;
+        this.mode = 3; // Mode 0: drag, 1:create, 2:rescale, 3:rotate
         this.uicontroller = new UIController(this.scene, this.canvas, this);
         this.controllers = []; // Array of controllers
         window.AppManager = this; // For debugging
@@ -26,6 +27,7 @@ const AppManager = Class.$extend({
         this.controllers.push(new RotateController(this.scene, this.canvas));
         this.controllers[this.mode].updateEvents();
     },
+
     getModeName() {
         let ret;
         switch (this.mode) {
@@ -47,9 +49,18 @@ const AppManager = Class.$extend({
         }
         return ret;
     },
+
     updateMode() {
         this.controllers[this.mode].destructEvent();
         this.mode = (this.mode + 1) % 4;
+        this.controllers[this.mode].updateEvents();
+    },
+
+    setNewMode(newMode) {
+        this.controllers[this.mode].destructEvent();
+        if (newMode < 5 && newMode >= 0) {
+            this.mode = newMode;
+        }
         this.controllers[this.mode].updateEvents();
     },
 });

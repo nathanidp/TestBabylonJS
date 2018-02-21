@@ -4,8 +4,8 @@ import * as BABYLON from "babylonjs";
 import Controller from "./controller";
 
 const DragController = Controller.$extend({
-    __init__(scene, canvas) {
-        this.$super(scene, canvas);
+    __init__(scene, canvas, activatedCamera) {
+        this.$super(scene, canvas, activatedCamera);
         this.interactObject = {
             drag: false, object: null, oldPos: null, normal: null,
         };
@@ -27,6 +27,7 @@ const DragController = Controller.$extend({
 
     pointerDownAction(evt, pickResult) {
         if (pickResult.hit) {
+            // this.scene.activeCamera.detachControl();
             this.interactObject.drag = true;
             this.interactObject.object = pickResult.pickedMesh;
             const planPos = pickResult.pickedPoint;
@@ -53,6 +54,7 @@ const DragController = Controller.$extend({
     },
 
     destructEvent() {
+        // this.scene.activeCamera.attachControl(this.canvas, false);
         if (this.interactObject.drag) {
             this.interactObject.drag = false;
             this.interactObject.oldPos = null;

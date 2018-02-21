@@ -29,7 +29,7 @@ window.addEventListener("DOMContentLoaded", function () {
         // camera.setTarget(BABYLON.Vector3.Zero());
 
         // attach the camera to the canvas
-        // camera.attachControl(canvas, false);
+        camera.attachControl(canvas, false);
 
         // create a basic light, aiming 0,1,0 - meaning, to the sky
         const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene); // eslint-disable-line
@@ -41,6 +41,7 @@ window.addEventListener("DOMContentLoaded", function () {
         window.scene = scene;
         window.photonui = photonui;
         window.canvas = canvas;
+        window.camera = camera;
         const box = BABYLON.MeshBuilder.CreateBox("box1", { width: 1, height: 1, depth: 1 }, scene);
         box.position = new BABYLON.Vector3(5, 0, 0);
         window.box = box;

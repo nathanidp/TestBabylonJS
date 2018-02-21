@@ -8,8 +8,8 @@ import arrowLeftImage from "../img/arrowLeft.png";
 import arrowRightImage from "../img/arrowRight.png";
 
 const RescaleController = Controller.$extend({
-    __init__(scene, canvas) {
-        this.$super(scene, canvas);
+    __init__(scene, canvas, activatedCamera) {
+        this.$super(scene, canvas, activatedCamera);
         this.interactObject = {
             drag: false, object: null, oldPos: null, normal: null, sprite: null,
         };
@@ -27,10 +27,12 @@ const RescaleController = Controller.$extend({
             let currentAxis;
             if (this.interactObject.sprite.name == "planeArrowLeft" || this.interactObject.sprite.name == "planeArrowRight") {
                 currentAxis = new BABYLON.Vector3(1, 0, 0);
-            } else {
+            } else if (this.interactObject.sprite.name == "planeArrowUp" || this.interactObject.sprite.name == "planeArrowDown") {
                 currentAxis = new BABYLON.Vector3(0, 1, 0);
+            } else {
+                currentAxis = new BABYLON.Vector3(0, 0, 1);
             }
-            if (this.interactObject.sprite.name == "planeArrowLeft" || this.interactObject.sprite.name == "planeArrowDown") {
+            if (this.interactObject.sprite.name == "planeArrowLeft" || this.interactObject.sprite.name == "planeArrowDown" || this.interactObject.sprite.name == "planeArrowFront") {
                 currentAxis = currentAxis.negate();
                 diff = diff.negate();
             }
@@ -48,16 +50,21 @@ const RescaleController = Controller.$extend({
             if (this.interactObject.object.scaling.y < 0) {
                 this.interactObject.object.scaling.y = 0;
             }
+            if (this.interactObject.object.scaling.z < 0) {
+                this.interactObject.object.scaling.z = 0;
+            }
             this.placeArrowPlane();
         }
     },
 
     pointerDownAction(evt, pickResult) {
         if (pickResult.hit && this.arrowPlanes.length == 0 && this.checkArrow(pickResult.pickedMesh.name) == -1) {
+            this.activateCamera(false);
             this.interactObject.object = pickResult.pickedMesh;
             this.interactObject.oldScale = this.interactObject.object.scaling;
             this.addRescaleArrow();
         } else if (pickResult.hit && this.checkArrow(pickResult.pickedMesh.name) != -1) {
+            // this.scene.activeCamera.detachControl();
             this.interactObject.drag = true;
             const planPos = pickResult.pickedPoint;
             planPos.z = pickResult.pickedMesh.getBoundingInfo().boundingBox.minimumWorld.z;
@@ -119,6 +126,24 @@ const RescaleController = Controller.$extend({
         matUp.backFaceCulling = false;
         arrowUpPlane.material = matUp;
         this.arrowPlanes.push(arrowUpPlane);
+        const arrowFrontPlane = new BABYLON.MeshBuilder.CreatePlane("planeArrowFront", { width: 1, height: 1 }, this.scene);
+        const matFront = new BABYLON.StandardMaterial("arrowUpMat", this.scene);
+        matFront.diffuseTexture = new BABYLON.Texture(arrowRightImage, this.scene);
+        matFront.diffuseTexture.hasAlpha = true;
+        matFront.backFaceCulling = false;
+        arrowFrontPlane.material = matFront;
+        arrowFrontPlane.parent = new BABYLON.Mesh("planeArrowFront", this.scene);
+        arrowFrontPlane.rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(Math.PI / 2, 0, 0);
+        this.arrowPlanes.push(arrowFrontPlane.parent);
+        const arrowBackPlane = new BABYLON.MeshBuilder.CreatePlane("planeArrowBack", { width: 1, height: 1 }, this.scene);
+        const matBack = new BABYLON.StandardMaterial("arrowBackMat", this.scene);
+        matBack.diffuseTexture = new BABYLON.Texture(arrowLeftImage, this.scene);
+        matBack.diffuseTexture.hasAlpha = true;
+        matBack.backFaceCulling = false;
+        arrowBackPlane.material = matBack;
+        arrowBackPlane.parent = new BABYLON.Mesh("planeArrowBack", this.scene);
+        arrowBackPlane.rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(Math.PI / 2, 0, 0);
+        this.arrowPlanes.push(arrowBackPlane.parent);
         this.placeArrowPlane();
     },
 
@@ -129,7 +154,7 @@ const RescaleController = Controller.$extend({
                 case "planeArrowDown":
                     arrow.position.x = bb.center.x;
                     arrow.position.y = bb.minimum.y;
-                    arrow.position.z = bb.minimum.z;
+                    arrow.position.z = bb.center.z;
                     if (this.interactObject.object.rotationQuaternion) {
                         arrow.rotationQuaternion = this.interactObject.object.rotationQuaternion;
                     }
@@ -139,7 +164,7 @@ const RescaleController = Controller.$extend({
                 case "planeArrowLeft":
                     arrow.position.x = bb.minimum.x;
                     arrow.position.y = bb.center.y;
-                    arrow.position.z = bb.minimum.z;
+                    arrow.position.z = bb.center.z;
                     if (this.interactObject.object.rotationQuaternion) {
                         arrow.rotationQuaternion = this.interactObject.object.rotationQuaternion;
                     }
@@ -149,7 +174,7 @@ const RescaleController = Controller.$extend({
                 case "planeArrowRight":
                     arrow.position.x = bb.maximum.x;
                     arrow.position.y = bb.center.y;
-                    arrow.position.z = bb.minimum.z;
+                    arrow.position.z = bb.center.z;
                     if (this.interactObject.object.rotationQuaternion) {
                         arrow.rotationQuaternion = this.interactObject.object.rotationQuaternion;
                     }
@@ -159,18 +184,39 @@ const RescaleController = Controller.$extend({
                 case "planeArrowUp":
                     arrow.position.x = bb.center.x;
                     arrow.position.y = bb.maximum.y;
-                    arrow.position.z = bb.minimum.z;
+                    arrow.position.z = bb.center.z;
                     if (this.interactObject.object.rotationQuaternion) {
                         arrow.rotationQuaternion = this.interactObject.object.rotationQuaternion;
                     }
                     arrow.position = BABYLON.Vector3.TransformCoordinates(arrow.position, bb.getWorldMatrix());
                     arrow.translate(BABYLON.Axis.Y, 1, BABYLON.Space.LOCAL);
                     break;
+                case "planeArrowFront":
+                    arrow.position.x = bb.center.x;
+                    arrow.position.y = bb.center.y;
+                    arrow.position.z = bb.minimum.z;
+                    if (this.interactObject.object.rotationQuaternion) {
+                        arrow.rotationQuaternion = this.interactObject.object.rotationQuaternion;
+                    }
+                    arrow.position = BABYLON.Vector3.TransformCoordinates(arrow.position, bb.getWorldMatrix());
+                    arrow.translate(BABYLON.Axis.Z, -1, BABYLON.Space.LOCAL);
+                    break;
+                case "planeArrowBack":
+                    arrow.position.x = bb.center.x;
+                    arrow.position.y = bb.center.y;
+                    arrow.position.z = bb.maximum.z;
+                    if (this.interactObject.object.rotationQuaternion) {
+                        arrow.rotationQuaternion = this.interactObject.object.rotationQuaternion;
+                    }
+                    arrow.position = BABYLON.Vector3.TransformCoordinates(arrow.position, bb.getWorldMatrix());
+                    arrow.translate(BABYLON.Axis.Z, 1, BABYLON.Space.LOCAL);
+                    break;
                 default:
                     console.log("Exception with ArrowPlanes");
             }
         });
     },
+
     checkArrow(arrowName) {
         let ret;
         switch (arrowName) {
@@ -186,12 +232,20 @@ const RescaleController = Controller.$extend({
             case "planeArrowUp":
                 ret = 3;
                 break;
+            case "planeArrowFront":
+                ret = 4;
+                break;
+            case "planeArrowBack":
+                ret = 5;
+                break;
             default:
                 ret = -1;
         }
         return ret;
     },
+
     destructEvent() {
+        this.activateCamera(true);
         while (this.arrowPlanes.length > 0) {
             const arrow = this.arrowPlanes.pop();
             arrow.dispose();

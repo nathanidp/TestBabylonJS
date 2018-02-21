@@ -51,10 +51,21 @@ const UIController = Class.$extend({
             if (evt.key == "k") {
                 this.manager.updateMode();
                 this.showMode();
+            } else if (evt.key == "c") {
+                this.manager.setNewMode(1);
+                this.showMode();
+            } else if (evt.key == "r") {
+                this.manager.setNewMode(3);
+                this.showMode();
+            } else if (evt.key == "s") {
+                this.manager.setNewMode(2);
+                this.showMode();
+            } else if (evt.key == "d") {
+                this.manager.setNewMode(0);
+                this.showMode();
             }
         };
     },
-
 });
 
 export default UIController;

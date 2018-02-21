@@ -4,8 +4,8 @@ import * as BABYLON from "babylonjs";
 import Controller from "./controller";
 
 const RotateController = Controller.$extend({
-    __init__(scene, canvas) {
-        this.$super(scene, canvas);
+    __init__(scene, canvas, activatedCamera) {
+        this.$super(scene, canvas, activatedCamera);
         this.interactObject = {
             rotate: false, object: null, oldPos: null, normal: null, axisRotate: 0, // 0 axis X, 1 axis Y, 2 axis Z
         }; // The object you interact with during the mode
@@ -59,6 +59,8 @@ const RotateController = Controller.$extend({
 
     pointerDownAction(evt, pickResult) {
         if (pickResult.hit) {
+            this.activateCamera(false);
+            // this.scene.activeCamera.detachControl();
             const checkGuizmo = this.checkGuizmoAxis(pickResult.pickedMesh.name);
             if (this.interactObject.object == null) {
                 const blueMat = new BABYLON.StandardMaterial("blueMat", this.scene);
@@ -132,6 +134,7 @@ const RotateController = Controller.$extend({
         return ret;
     },
     destructEvent() {
+        this.activateCamera(true);
         while (this.guizmos.length > 0) {
             const toDestroy = this.guizmos.pop();
             if (toDestroy != null) { toDestroy.dispose(); }

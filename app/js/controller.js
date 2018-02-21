@@ -4,10 +4,11 @@ import * as BABYLON from "babylonjs";
 import * as Class from "abitbol";
 
 const Controller = Class.$extend({
-    __init__(scene, canvas) {
+    __init__(scene, canvas, activatedCamera) {
         this.scene = scene;
         this.canvas = canvas;
         this.interactObject = null; // The object you interact with during the mode
+        this.activatedCamera = activatedCamera;
     },
     updateEvents() {
         this.scene.onPointerMove = this.pointerMoveAction;
@@ -58,6 +59,17 @@ const Controller = Class.$extend({
         const ba = point.subtract(linePoint);
         const bh = BABYLON.Vector2.Dot(ba, lineVector) / lineVector.length();
         return Math.abs(bh);
+    },
+    updateCamera() {
+        if (this.activatedCamera) {
+            this.activateCamera(false);
+        } else { this.activateCamera(true); }
+    },
+    activateCamera(bool) {
+        if (!bool) {
+            this.scene.activeCamera.detachControl(this.canvas);
+        } else { this.scene.activeCamera.attachControl(this.canvas, false); }
+        this.activatedCamera = bool;
     },
 });
 
