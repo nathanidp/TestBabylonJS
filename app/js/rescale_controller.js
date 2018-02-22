@@ -44,14 +44,14 @@ const RescaleController = Controller.$extend({
             const signedDistance = diff.length() * Math.sign(BABYLON.Vector3.Dot(rotatedAxis, diff));
             const diff3 = currentAxis.clone().normalize().scale(signedDistance);
             this.interactObject.object.scaling = this.interactObject.oldScale.add(diff3);
-            if (this.interactObject.object.scaling.x < 0) {
-                this.interactObject.object.scaling.x = 0;
+            if (this.interactObject.object.scaling.x < 0.5) {
+                this.interactObject.object.scaling.x = 0.5;
             }
-            if (this.interactObject.object.scaling.y < 0) {
-                this.interactObject.object.scaling.y = 0;
+            if (this.interactObject.object.scaling.y < 0.5) {
+                this.interactObject.object.scaling.y = 0.5;
             }
-            if (this.interactObject.object.scaling.z < 0) {
-                this.interactObject.object.scaling.z = 0;
+            if (this.interactObject.object.scaling.z < 0.5) {
+                this.interactObject.object.scaling.z = 0.5;
             }
             this.placeArrowPlane();
         }
@@ -64,7 +64,6 @@ const RescaleController = Controller.$extend({
             this.interactObject.oldScale = this.interactObject.object.scaling;
             this.addRescaleArrow();
         } else if (pickResult.hit && this.checkArrow(pickResult.pickedMesh.name) != -1) {
-            // this.scene.activeCamera.detachControl();
             this.interactObject.drag = true;
             const planPos = pickResult.pickedPoint;
             planPos.z = pickResult.pickedMesh.getBoundingInfo().boundingBox.minimumWorld.z;
@@ -84,7 +83,7 @@ const RescaleController = Controller.$extend({
             const newRay = this.scene.createPickingRay(this.scene.pointerX, this.scene.pointerY);
             const intersect = this.intersectionRayPlane(newRay, this.draggingPlaneGeo);
             this.interactObject.spriteOldPos = intersect;
-            this.draggingPlaneGeo.visibility = 0;
+            this.draggingPlaneGeo.visibility = 1;
         } else { this.destructEvent(); }
     },
 

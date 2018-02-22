@@ -60,7 +60,6 @@ const RotateController = Controller.$extend({
     pointerDownAction(evt, pickResult) {
         if (pickResult.hit) {
             this.activateCamera(false);
-            // this.scene.activeCamera.detachControl();
             const checkGuizmo = this.checkGuizmoAxis(pickResult.pickedMesh.name);
             if (this.interactObject.object == null) {
                 const blueMat = new BABYLON.StandardMaterial("blueMat", this.scene);

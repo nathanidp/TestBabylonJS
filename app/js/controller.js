@@ -34,7 +34,7 @@ const Controller = Class.$extend({
         const minCorners = plane.getBoundingInfo().boundingBox.minimum;
         const maxCorners = plane.getBoundingInfo().boundingBox.maximum;
         const coord = plane.position;
-        // p = up-left, q = up-right, r=down-right, s=down-left
+        // p = up-left, q = up-right, r=down-right, s=down-left (4 Points of the plane)
         const p = new BABYLON.Vector3(minCorners.x, maxCorners.y, 0).add(coord);
         const q = new BABYLON.Vector3(maxCorners.x, maxCorners.y, 0).add(coord);
         const r = new BABYLON.Vector3(minCorners.x, minCorners.y, 0).add(coord);
@@ -70,6 +70,16 @@ const Controller = Class.$extend({
             this.scene.activeCamera.detachControl(this.canvas);
         } else { this.scene.activeCamera.attachControl(this.canvas, false); }
         this.activatedCamera = bool;
+    },
+    pointAdaptToObjectBoundingBox(point, object) {
+        const bb = object.getBoundingInfo().boundingBox;
+        const height = bb.maximum.y - bb.minimum.y;
+        const width = bb.maximum.x - bb.minimum.x;
+        const depth = bb.maximum.z - bb.minimum.z;
+        const bbMesh = BABYLON.MeshBuilder.CreateBox("bbMesh", { height, width, depth }, this.scene);
+        bbMesh.parent = object;
+        bbMesh.visibility = 0;
+        return bbMesh;
     },
 });
 
