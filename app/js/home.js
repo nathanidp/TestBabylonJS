@@ -16,6 +16,9 @@ window.addEventListener("DOMContentLoaded", function () {
     const canvas = document.getElementById("renderCanvas");
     const engine = new BABYLON.Engine(canvas, true);
     let appManager;
+    document.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
+    }, false);
 
     const createScene = function () {
     // create a basic BJS Scene object
@@ -32,19 +35,19 @@ window.addEventListener("DOMContentLoaded", function () {
         camera.attachControl(canvas, false);
 
         // create a basic light, aiming 0,1,0 - meaning, to the sky
-        const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene); // eslint-disable-line
-        const light2 = new BABYLON.PointLight("light2", new BABYLON.Vector3(0, -0.5, -1), scene); // eslint-disable-line
+        // const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene); // eslint-disable-line
+        // const light2 = new BABYLON.PointLight("light2", new BABYLON.Vector3(0, -0.5, -1), scene); // eslint-disable-line
 
         // create a built-in "sphere" shape; its constructor takes 6 params: name, segment, diameter, scene, updatable, sideOrientation
-        const sphere = BABYLON.MeshBuilder.CreateSphere("sphere1", { segment: 16, diameter: 2 }, scene);
-        window.sphere = sphere;
+        // const sphere = BABYLON.MeshBuilder.CreateSphere("sphere1", { segment: 16, diameter: 2 }, scene);
+        // window.sphere = sphere;
         window.scene = scene;
         window.photonui = photonui;
         window.canvas = canvas;
         window.camera = camera;
-        const box = BABYLON.MeshBuilder.CreateBox("box1", { width: 1, height: 1, depth: 1 }, scene);
-        box.position = new BABYLON.Vector3(5, 0, 0);
-        window.box = box;
+        // const box = BABYLON.MeshBuilder.CreateBox("box1", { width: 1, height: 1, depth: 1 }, scene);
+        // box.position = new BABYLON.Vector3(5, 0, 0);
+        // window.box = box;
         appManager = new AppManager(scene, canvas);
         appManager.init();
         return scene;
